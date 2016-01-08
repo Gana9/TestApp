@@ -1,6 +1,7 @@
 package com.example.httpapp;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -60,8 +61,8 @@ public class MainActivity extends Activity {
         @Override
         protected String doInBackground(String... params) {
         	String app;
-        	 Log.i("Praeda","1");
-        	app=connectUDP((url.toString().equals("")) ? "151.24.156.247:8082" : url.toString());
+        	//app=connectUDP((url.toString().equals("")) ? "151.24.156.247:8082" : url.toString());
+        	app=connectTCP((url.toString().equals("")) ? "151.24.156.247:8082" : url.toString());
             return app;
         }
 
@@ -89,11 +90,9 @@ public String connect(String url)
 
     // Prepare a request object
     HttpGet httpget = new HttpGet(url); 
-    Log.i("Praeda","0s");
     // Execute the request
     HttpResponse response;
     try {
-    	  Log.i("Praeda","a");
         response = httpclient.execute(httpget);
         // Examine the response status
         //Log.i("Praeda","a");
@@ -120,7 +119,6 @@ public String connect(String url)
     } catch (Exception e) {e.printStackTrace(); return null;}
 }
 public String connectUDP(String url){
-	 BufferedReader inFromUser =    new BufferedReader(new InputStreamReader(System.in));
 	 String [] app=url.split(":");
 	      DatagramSocket clientSocket = null;
 		try {
@@ -152,7 +150,7 @@ public String connectUDP(String url){
 	      DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 	      
 	      try {
-	    	  clientSocket.setSoTimeout(10000);
+	    	 
 			clientSocket.receive(receivePacket);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -160,28 +158,39 @@ public String connectUDP(String url){
 			return null;
 		}
 	      String modifiedSentence = new String(receivePacket.getData());
+	      modifiedSentence.substring(0,receivePacket.getLength());
 	      System.out.println("FROM SERVER:" + modifiedSentence);
 	      clientSocket.close();
 	      return "a";
 }
+
+
 public String connectTCP(String url){
 	String[] app = url.split(":");
-
-	try {
-		Socket socket=new Socket(InetAddress.getByName(app[0]), Integer.parseInt(app[1]));
-		return "a";
-	} catch (NumberFormatException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (UnknownHostException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-	return null;
+	String appS="test comunicazione TCP\n"; 
+	String modifiedSentence=null;   
 	
+	Socket socket = null;
+	try {
+		socket=new Socket(InetAddress.getByName(app[0]), Integer.parseInt(app[1]));
+		
+		DataOutputStream outToServer = new DataOutputStream(socket.getOutputStream());   
+		
+		BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));    
+		
+		outToServer.write(appS.getBytes());
+		
+		modifiedSentence = inFromServer.readLine();  
+		
+		socket.close(); 
+		
+		return "a";
+		
+	} catch (Exception e) {
+		e.printStackTrace();
+		return null;
+	}
+		
 }
 
 private static String convertStreamToString(InputStream is) {
